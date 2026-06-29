@@ -6,9 +6,7 @@ import java.util.UUID;
 
 public record PermissionRequest(
         @NotNull(message = "User id is required") UUID userId,
-        boolean canViewReports,
-        boolean canManageWorkers,
-        boolean canApproveMarketplace,
-        boolean canSendNotifications,
-        boolean canManageMachines
+        boolean viewReports,
+        boolean enterData,
+        boolean admin
 ) {}

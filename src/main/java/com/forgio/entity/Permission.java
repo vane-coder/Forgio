@@ -25,20 +25,14 @@ public class Permission {
     @JoinColumn(name = "factory_id", nullable = false)
     private Factory factory;
 
-    @Column(name = "can_view_reports")
-    private boolean canViewReports = false;
+    @Column(name = "view_reports")
+    private boolean viewReports = false;
 
-    @Column(name = "can_manage_workers")
-    private boolean canManageWorkers = false;
+    @Column(name = "enter_data")
+    private boolean enterData = false;
 
-    @Column(name = "can_approve_marketplace")
-    private boolean canApproveMarketplace = false;
-
-    @Column(name = "can_send_notifications")
-    private boolean canSendNotifications = false;
-
-    @Column(name = "can_manage_machines")
-    private boolean canManageMachines = false;
+    @Column(name = "admin")
+    private boolean admin = false;
 
     @CreationTimestamp
     @Column(name = "created_at", updatable = false)

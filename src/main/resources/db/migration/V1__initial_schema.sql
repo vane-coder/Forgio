@@ -25,7 +25,6 @@ CREATE TABLE factories (
 );
 
 -- ── Companies (multi-branch support) ─────────────────────────
--- A factory belongs to a company; one company can own many factories (branches).
 CREATE TABLE companies (
     company_id   UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     name         VARCHAR(255) NOT NULL,
@@ -42,9 +41,9 @@ CREATE TABLE users (
     phone          VARCHAR(20) UNIQUE NOT NULL,
     password_hash  VARCHAR(255) NOT NULL,
     role           user_role NOT NULL DEFAULT 'WORKER',
-    department_id  UUID,                        -- FK added after departments table
+    department_id  UUID,
     is_active      BOOLEAN NOT NULL DEFAULT TRUE,
-    fcm_token      VARCHAR(500),                -- Firebase device token for push notifications
+    fcm_token      VARCHAR(500),
     created_at     TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     updated_at     TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
@@ -52,16 +51,14 @@ CREATE TABLE users (
 CREATE INDEX idx_users_factory ON users(factory_id);
 CREATE INDEX idx_users_phone ON users(phone);
 
--- ── Permissions (fine-grained per user) ──────────────────────
+-- ── Permissions (simplified to 3 flags to match the permissions screen) ──
 CREATE TABLE permissions (
     perm_id       UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     user_id       UUID NOT NULL REFERENCES users(user_id) ON DELETE CASCADE,
     factory_id    UUID NOT NULL REFERENCES factories(factory_id) ON DELETE CASCADE,
-    can_view_reports        BOOLEAN DEFAULT FALSE,
-    can_manage_workers      BOOLEAN DEFAULT FALSE,
-    can_approve_marketplace BOOLEAN DEFAULT FALSE,
-    can_send_notifications  BOOLEAN DEFAULT FALSE,
-    can_manage_machines     BOOLEAN DEFAULT FALSE,
+    view_reports  BOOLEAN DEFAULT FALSE,
+    enter_data    BOOLEAN DEFAULT FALSE,
+    admin         BOOLEAN DEFAULT FALSE,
     created_at    TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     UNIQUE(user_id, factory_id)
 );
@@ -77,7 +74,6 @@ CREATE TABLE departments (
 
 CREATE INDEX idx_departments_factory ON departments(factory_id);
 
--- Back-fill FK on users
 ALTER TABLE users ADD CONSTRAINT fk_users_department
     FOREIGN KEY (department_id) REFERENCES departments(dept_id);
 
@@ -116,7 +112,7 @@ CREATE TABLE production_entries (
     quantity_produced  DECIMAL(12,3) NOT NULL,
     shift              VARCHAR(50),
     entry_date         DATE NOT NULL DEFAULT CURRENT_DATE,
-    is_locked          BOOLEAN NOT NULL DEFAULT FALSE,  -- locked 24h after submission
+    is_locked          BOOLEAN NOT NULL DEFAULT FALSE,
     notes              TEXT,
     created_at         TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
@@ -149,11 +145,12 @@ CREATE TABLE waste_records (
 
 CREATE INDEX idx_waste_factory ON waste_records(factory_id);
 
--- ── Machines ──────────────────────────────────────────────────
+-- ── Machines (added 'type' column to match the machines screen) ──
 CREATE TABLE machines (
     machine_id        UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     factory_id        UUID NOT NULL REFERENCES factories(factory_id) ON DELETE CASCADE,
     name              VARCHAR(255) NOT NULL,
+    type              VARCHAR(100),
     status            machine_status NOT NULL DEFAULT 'RUNNING',
     last_service_date DATE,
     created_at        TIMESTAMPTZ NOT NULL DEFAULT NOW(),
@@ -202,13 +199,14 @@ CREATE TABLE news_feed (
 
 CREATE INDEX idx_feed_factory ON news_feed(factory_id);
 
--- ── Marketplace Listings ──────────────────────────────────────
+-- ── Marketplace Listings (added 'category' to match the marketplace screen) ──
 CREATE TABLE market_listings (
     listing_id     UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     factory_id     UUID NOT NULL REFERENCES factories(factory_id) ON DELETE CASCADE,
     material_id    UUID NOT NULL REFERENCES raw_materials(material_id),
     quantity       DECIMAL(12,3) NOT NULL,
     price_per_unit DECIMAL(12,2) NOT NULL,
+    category       VARCHAR(100),
     status         listing_status NOT NULL DEFAULT 'ACTIVE',
     description    TEXT,
     created_at     TIMESTAMPTZ NOT NULL DEFAULT NOW(),
@@ -230,6 +228,20 @@ CREATE TABLE market_transactions (
     created_at         TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     updated_at         TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
+
+-- ── Reports (NEW — stores generated weekly/monthly reports) ──
+CREATE TABLE reports (
+    report_id    UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    factory_id   UUID NOT NULL REFERENCES factories(factory_id) ON DELETE CASCADE,
+    title        VARCHAR(255) NOT NULL,
+    period_start DATE NOT NULL,
+    period_end   DATE NOT NULL,
+    generated_by UUID REFERENCES users(user_id),
+    content      TEXT,
+    created_at   TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE INDEX idx_reports_factory ON reports(factory_id);
 
 -- ── Advertisements ────────────────────────────────────────────
 CREATE TABLE advertisements (
