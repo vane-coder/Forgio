@@ -9,8 +9,9 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class MachineController {
 
+    // This connects the backend server to the machines screen
     @GetMapping
-    public ResponseEntity<String> listMachines() {
-        return ResponseEntity.ok("Machines endpoint connected successfully!");
+    public ResponseEntity<String> getMachinesScreenData() {
+        return ResponseEntity.ok("Machines screen backend connected successfully!");
     }
 }
