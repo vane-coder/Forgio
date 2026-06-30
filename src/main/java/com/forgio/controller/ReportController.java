@@ -12,6 +12,7 @@ public class ReportController {
     // This path lets the reports screen ask for weekly and monthly summaries
     @GetMapping
     public ResponseEntity<String> getWeeklyAndMonthlyReports() {
-        return ResponseEntity.ok("Weekly and Monthly reports data fetched successfully!");
+     return ResponseEntity.ok("Weekly and Monthly reports data fetched successfully!");
+
     }
 }
