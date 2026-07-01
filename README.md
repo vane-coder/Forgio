@@ -54,7 +54,7 @@ HTTP request (Bearer) ──▶ JwtAuthenticationFilter
 ## Running it
 
 ### Prerequisites
-- Java 21
+- Java 25
 - PostgreSQL 14+
 - Maven 3.9+
 

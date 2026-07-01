@@ -18,7 +18,8 @@
     <description>Multi-tenant manufacturing management system for Ghanaian SMEs</description>
 
     <properties>
-        <java.version>21</java.version>
+        <java.version>25</java.version>
+        <lombok.version>1.18.38</lombok.version>
         <jjwt.version>0.12.5</jjwt.version>
     </properties>
 
@@ -111,6 +112,21 @@
 
     <build>
         <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <version>3.13.0</version>
+                <configuration>
+                    <release>${java.version}</release>
+                    <annotationProcessorPaths>
+                        <path>
+                            <groupId>org.projectlombok</groupId>
+                            <artifactId>lombok</artifactId>
+                            <version>${lombok.version}</version>
+                        </path>
+                    </annotationProcessorPaths>
+                </configuration>
+            </plugin>
             <plugin>
                 <groupId>org.springframework.boot</groupId>
                 <artifactId>spring-boot-maven-plugin</artifactId>
