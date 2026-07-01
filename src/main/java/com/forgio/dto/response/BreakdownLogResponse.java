@@ -6,7 +6,7 @@ import java.util.UUID;
 
 @Data
 @AllArgsConstructor
-public class BreakdownResponse {
+public class BreakdownLogResponse {
     private UUID id;
     private String status;
     private String message;

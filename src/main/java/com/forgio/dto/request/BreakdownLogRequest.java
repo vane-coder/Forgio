@@ -6,7 +6,7 @@ import lombok.Data;
 import java.util.UUID;
 
 @Data
-public class BreakdownRequest {
+public class BreakdownLogRequest {
     @NotNull(message = "Machine ID is required")
     private UUID machineId;
 
