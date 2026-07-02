@@ -137,3 +137,9 @@ src/main/resources/
 ├── application.properties
 └── db/migration/  V1__initial_schema.sql  (Flyway)
 ```
+-- Database connection details:
+-- Host: localhost
+-- Port: 5432
+-- Database: forgio_db
+-- Username: your_user
+-- Password: your_password

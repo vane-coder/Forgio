@@ -71,4 +71,16 @@ public class User implements UserDetails {
     @Override public boolean isAccountNonExpired()     { return true; }
     @Override public boolean isAccountNonLocked()      { return true; }
     @Override public boolean isCredentialsNonExpired() { return true; }
+    // ── Explicit Getters/Setters for ProfileService ──────────
+    public String getPasswordHash() {
+        return this.passwordHash;
+    }
+
+    public void setPasswordHash(String passwordHash) {
+        this.passwordHash = passwordHash;
+    }
+
+    public Factory getFactory() {
+        return this.factory;
+    }
 }
