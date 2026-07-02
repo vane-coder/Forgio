@@ -22,16 +22,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.List;
 import java.util.UUID;
 
-/**
- * Branch logic. NOTE the multi-tenancy twist: Logistics is COMPANY-scoped, not
- * FACTORY-scoped like the rest of the app. The current user's factory is only
- * used to resolve which Company they belong to; every branch query is then
- * scoped by that companyId so a manager sees/creates branches across their
- * whole company, not just their own factory. A factory with no company yet
- * (company_id is nullable) is bootstrapped into one on first branch creation:
- * the factory becomes the company's first (main) branch, and the requested
- * branch is created as a second, brand-new Factory under the same company.
- */
+
 @Service
 @RequiredArgsConstructor
 public class BranchService {
@@ -65,7 +56,7 @@ public class BranchService {
                 .toList();
     }
 
-    /** Create a new branch under my company (bootstrapping the company if needed). */
+    /** Create a new branch under my company */
     @Transactional
     public BranchResponse createBranch(BranchRequest req) {
         Factory myFactory = factoryRepository.findById(TenantContext.getFactoryId())
