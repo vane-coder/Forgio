@@ -3,14 +3,6 @@
 -- Multi-tenant: every company-scoped table includes factory_id
 -- ============================================================
 
--- Enums
-CREATE TYPE user_role AS ENUM ('MANAGER', 'DEPT_HEAD', 'WORKER', 'DRIVER', 'SYSTEM_ADMIN');
-CREATE TYPE machine_status AS ENUM ('RUNNING', 'STOPPED', 'MAINTENANCE');
-CREATE TYPE shipment_status AS ENUM ('PENDING', 'DEPARTED', 'IN_TRANSIT', 'ARRIVED');
-CREATE TYPE notification_type AS ENUM ('MEETING', 'ALERT', 'WEATHER', 'GENERAL');
-CREATE TYPE listing_status AS ENUM ('ACTIVE', 'SOLD', 'CANCELLED');
-CREATE TYPE transaction_status AS ENUM ('PENDING', 'COMPLETED', 'FAILED');
-CREATE TYPE subscription_plan AS ENUM ('BASIC', 'PRO');
 
 -- ── Factories (top-level tenant) ─────────────────────────────
 CREATE TABLE factories (
@@ -18,7 +10,7 @@ CREATE TABLE factories (
     name          VARCHAR(255) NOT NULL,
     location      VARCHAR(500),
     industry      VARCHAR(100),
-    plan          subscription_plan NOT NULL DEFAULT 'BASIC',
+    plan          VARCHAR(30) NOT NULL DEFAULT 'BASIC',
     is_active     BOOLEAN NOT NULL DEFAULT TRUE,
     created_at    TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     updated_at    TIMESTAMPTZ NOT NULL DEFAULT NOW()
@@ -40,7 +32,7 @@ CREATE TABLE users (
     name           VARCHAR(255) NOT NULL,
     phone          VARCHAR(20) UNIQUE NOT NULL,
     password_hash  VARCHAR(255) NOT NULL,
-    role           user_role NOT NULL DEFAULT 'WORKER',
+    role           VARCHAR(30) NOT NULL DEFAULT 'WORKER',
     department_id  UUID,
     is_active      BOOLEAN NOT NULL DEFAULT TRUE,
     fcm_token      VARCHAR(500),
@@ -151,7 +143,7 @@ CREATE TABLE machines (
     factory_id        UUID NOT NULL REFERENCES factories(factory_id) ON DELETE CASCADE,
     name              VARCHAR(255) NOT NULL,
     type              VARCHAR(100),
-    status            machine_status NOT NULL DEFAULT 'RUNNING',
+    status            VARCHAR(30) NOT NULL DEFAULT 'RUNNING',
     last_service_date DATE,
     created_at        TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     updated_at        TIMESTAMPTZ NOT NULL DEFAULT NOW()
@@ -179,10 +171,10 @@ CREATE TABLE notifications (
     notif_id      UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     factory_id    UUID NOT NULL REFERENCES factories(factory_id) ON DELETE CASCADE,
     sent_by       UUID REFERENCES users(user_id),
-    target_role   user_role,
+    target_role   VARCHAR(30),
     target_dept   UUID REFERENCES departments(dept_id),
     message       TEXT NOT NULL,
-    type          notification_type NOT NULL DEFAULT 'GENERAL',
+    type          VARCHAR(30) NOT NULL DEFAULT 'GENERAL',
     sent_at       TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
@@ -207,7 +199,7 @@ CREATE TABLE market_listings (
     quantity       DECIMAL(12,3) NOT NULL,
     price_per_unit DECIMAL(12,2) NOT NULL,
     category       VARCHAR(100),
-    status         listing_status NOT NULL DEFAULT 'ACTIVE',
+    status         VARCHAR(30) NOT NULL DEFAULT 'ACTIVE',
     description    TEXT,
     created_at     TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     updated_at     TIMESTAMPTZ NOT NULL DEFAULT NOW()
@@ -224,7 +216,7 @@ CREATE TABLE market_transactions (
     listing_id         UUID NOT NULL REFERENCES market_listings(listing_id),
     quantity_purchased DECIMAL(12,3) NOT NULL,
     amount             DECIMAL(12,2) NOT NULL,
-    status             transaction_status NOT NULL DEFAULT 'PENDING',
+    status             VARCHAR(30) NOT NULL DEFAULT 'PENDING',
     created_at         TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     updated_at         TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
@@ -276,7 +268,7 @@ CREATE TABLE shipments (
     to_branch_id     UUID NOT NULL REFERENCES branches(branch_id),
     driver_id        UUID REFERENCES users(user_id),
     company_id       UUID NOT NULL REFERENCES companies(company_id),
-    status           shipment_status NOT NULL DEFAULT 'PENDING',
+    status           VARCHAR(30) NOT NULL DEFAULT 'PENDING',
     notes            TEXT,
     departed_at      TIMESTAMPTZ,
     arrived_at       TIMESTAMPTZ,

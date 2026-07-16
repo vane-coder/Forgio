@@ -2,33 +2,37 @@ package com.forgio.entity;
 
 import jakarta.persistence.*;
 import lombok.*;
-import java.time.Instant;
+import java.time.LocalDate;
 import java.util.UUID;
 
-@Entity 
+@Entity
 @Table(name = "reports")
-@Getter 
-@Setter 
-@NoArgsConstructor 
-@AllArgsConstructor 
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
 @Builder
 public class Report {
-    @Id 
-    @GeneratedValue(strategy = GenerationType.UUID) 
-    @Column(name = "report_id") 
+    @Id
+    @GeneratedValue(strategy = GenerationType.UUID)
+    @Column(name = "report_id")
     private UUID reportId;
 
-    @ManyToOne(fetch = FetchType.LAZY) 
-    @JoinColumn(name = "factory_id")   
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "factory_id")
     private Factory factory;
 
     private String title;
-    
-    @Column(name = "report_type")
-    private String reportType; // WEEKLY or MONTHLY
 
-    @Column(name = "generated_at")
-    private Instant generatedAt;
+    @Column(name = "period_start")
+    private LocalDate periodStart;
 
-    private String contentSummary;
+    @Column(name = "period_end")
+    private LocalDate periodEnd;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "generated_by")
+    private User generatedBy;
+
+    private String content;
 }
