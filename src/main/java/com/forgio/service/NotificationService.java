@@ -71,6 +71,16 @@ public class NotificationService {
         return toResponse(notificationRepository.save(notif));
     }
 
+    /** Notifications this manager has sent. */
+    @Transactional(readOnly = true)
+    public List<NotificationResponse> listSentByMe() {
+        return notificationRepository
+                .findBySentBy_UserIdOrderBySentAtDesc(currentUserId())
+                .stream()
+                .map(this::toResponse)
+                .toList();
+    }
+
     private NotificationResponse toResponse(Notification n) {
         User s = n.getSentBy();
         return new NotificationResponse(
