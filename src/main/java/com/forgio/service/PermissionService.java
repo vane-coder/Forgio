@@ -14,7 +14,11 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.List;
+import java.util.Map;
 import java.util.UUID;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -23,6 +27,24 @@ public class PermissionService {
     private final PermissionRepository permissionRepository;
     private final UserRepository userRepository;
     private final FactoryRepository factoryRepository;
+
+    @Transactional(readOnly = true)
+    public List<PermissionResponse> listAll() {
+        UUID factoryId = TenantContext.getFactoryId();
+        List<User> users = userRepository.findByFactory_FactoryId(factoryId);
+        Map<UUID, Permission> permMap = permissionRepository.findByFactory_FactoryId(factoryId)
+                .stream()
+                .collect(Collectors.toMap(p -> p.getUser().getUserId(), Function.identity()));
+
+        return users.stream().map(user -> {
+            Permission perm = permMap.get(user.getUserId());
+            if (perm == null) {
+                return new PermissionResponse(null, user.getUserId(), user.getName(),
+                        false, false, false);
+            }
+            return toResponse(perm, user);
+        }).toList();
+    }
 
     @Transactional(readOnly = true)
     public PermissionResponse getForUser(UUID userId) {

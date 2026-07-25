@@ -6,7 +6,12 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import com.forgio.enums.MachineStatus;
+import org.springframework.security.access.prepost.PreAuthorize;
+
 import java.util.List;
+import java.util.Map;
+import java.util.UUID;
 
 @RestController
 @RequestMapping("/api/v1/machines")
@@ -18,5 +23,14 @@ public class MachineController {
     @GetMapping
     public ResponseEntity<List<MachineResponse>> list() {
         return ResponseEntity.ok(machineService.listMachines());
+    }
+
+    @PatchMapping("/{id}/status")
+    @PreAuthorize("hasRole('MANAGER')")
+    public ResponseEntity<MachineResponse> updateStatus(
+            @PathVariable UUID id,
+            @RequestBody Map<String, String> body) {
+        MachineStatus status = MachineStatus.valueOf(body.get("status"));
+        return ResponseEntity.ok(machineService.updateStatus(id, status));
     }
 }

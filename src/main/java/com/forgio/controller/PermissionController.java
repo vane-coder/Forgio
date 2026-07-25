@@ -9,6 +9,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
 import java.util.UUID;
 
 @RestController
@@ -17,6 +18,12 @@ import java.util.UUID;
 public class PermissionController {
 
     private final PermissionService permissionService;
+
+    @GetMapping
+    @PreAuthorize("hasRole('MANAGER')")
+    public ResponseEntity<List<PermissionResponse>> listAll() {
+        return ResponseEntity.ok(permissionService.listAll());
+    }
 
     @GetMapping("/user/{userId}")
     @PreAuthorize("hasRole('MANAGER')")
