@@ -28,4 +28,8 @@ public class NotificationController {
     public ResponseEntity<NotificationResponse> send(@Valid @RequestBody NotificationRequest req) {
         return ResponseEntity.ok(notificationService.send(req));
     }
+    @GetMapping("/sent")
+    public ResponseEntity<List<NotificationResponse>> sent() {
+        return ResponseEntity.ok(notificationService.listSentByMe());
+    }
 }

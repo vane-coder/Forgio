@@ -8,4 +8,5 @@ import java.util.UUID;
 
 public interface NotificationRepository extends JpaRepository<Notification, UUID> {
     List<Notification> findByFactory_FactoryIdOrderBySentAtDesc(UUID factoryId);
+   List<Notification> findBySentBy_UserIdOrderBySentAtDesc(UUID userId);
 }
