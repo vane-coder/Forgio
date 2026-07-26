@@ -41,6 +41,12 @@ public class GlobalExceptionHandler {
         return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(body(HttpStatus.UNAUTHORIZED, "Invalid phone or password"));
     }
 
+    @ExceptionHandler(TooManyRequestsException.class)
+    public ResponseEntity<Object> handleTooManyRequests(TooManyRequestsException ex) {
+        return ResponseEntity.status(HttpStatus.TOO_MANY_REQUESTS)
+                .body(body(HttpStatus.TOO_MANY_REQUESTS, ex.getMessage()));
+    }
+
     @ExceptionHandler(AccessDeniedException.class)
     public ResponseEntity<Object> handleAccessDenied(AccessDeniedException ex) {
         return ResponseEntity.status(HttpStatus.FORBIDDEN).body(body(HttpStatus.FORBIDDEN, "You do not have permission to perform this action"));
