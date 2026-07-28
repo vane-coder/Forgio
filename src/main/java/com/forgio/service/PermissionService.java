@@ -15,10 +15,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
-import java.util.Map;
 import java.util.UUID;
-import java.util.function.Function;
-import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -27,24 +24,6 @@ public class PermissionService {
     private final PermissionRepository permissionRepository;
     private final UserRepository userRepository;
     private final FactoryRepository factoryRepository;
-
-    @Transactional(readOnly = true)
-    public List<PermissionResponse> listAll() {
-        UUID factoryId = TenantContext.getFactoryId();
-        List<User> users = userRepository.findByFactory_FactoryId(factoryId);
-        Map<UUID, Permission> permMap = permissionRepository.findByFactory_FactoryId(factoryId)
-                .stream()
-                .collect(Collectors.toMap(p -> p.getUser().getUserId(), Function.identity()));
-
-        return users.stream().map(user -> {
-            Permission perm = permMap.get(user.getUserId());
-            if (perm == null) {
-                return new PermissionResponse(null, user.getUserId(), user.getName(),
-                        false, false, false);
-            }
-            return toResponse(perm, user);
-        }).toList();
-    }
 
     @Transactional(readOnly = true)
     public PermissionResponse getForUser(UUID userId) {
@@ -59,10 +38,28 @@ public class PermissionService {
 
         if (perm == null) {
             return new PermissionResponse(
-                    null, user.getUserId(), user.getName(),
+                    null, user.getUserId(), user.getName(), user.getRole().name(),
                     false, false, false);
         }
         return toResponse(perm, user);
+    }
+
+    @Transactional(readOnly = true)
+    public List<PermissionResponse> listAllWithPermissions() {
+        UUID factoryId = TenantContext.getFactoryId();
+        return userRepository.findByFactory_FactoryId(factoryId).stream()
+                .map(user -> {
+                    Permission perm = permissionRepository
+                            .findByUser_UserIdAndFactory_FactoryId(user.getUserId(), factoryId)
+                            .orElse(null);
+                    if (perm == null) {
+                        return new PermissionResponse(
+                                null, user.getUserId(), user.getName(), user.getRole().name(),
+                                false, false, false);
+                    }
+                    return toResponse(perm, user);
+                })
+                .toList();
     }
 
     @Transactional
@@ -90,6 +87,7 @@ public class PermissionService {
                 p.getPermId(),
                 user.getUserId(),
                 user.getName(),
+                user.getRole().name(),
                 p.isViewReports(),
                 p.isEnterData(),
                 p.isAdmin());

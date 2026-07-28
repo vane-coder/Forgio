@@ -22,7 +22,7 @@ public class PermissionController {
     @GetMapping
     @PreAuthorize("hasRole('MANAGER')")
     public ResponseEntity<List<PermissionResponse>> listAll() {
-        return ResponseEntity.ok(permissionService.listAll());
+        return ResponseEntity.ok(permissionService.listAllWithPermissions());
     }
 
     @GetMapping("/user/{userId}")

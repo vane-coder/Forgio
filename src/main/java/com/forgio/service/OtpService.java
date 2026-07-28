@@ -62,7 +62,7 @@ public class OtpService {
 
         String message = String.format(
                 "Your Forgio verification code is: %s. It expires in %d minutes.", code, expiryMinutes);
-        smsService.sendSms(phone, message);
+        smsService.sendSms(toInternational(phone), message);
 
         return verificationId;
     }
@@ -109,4 +109,14 @@ public class OtpService {
         int code = RANDOM.nextInt(bound);
         return String.format("%0" + otpLength + "d", code);
     }
+
+    private String toInternational(String phone) {
+    if (phone.startsWith("0")) {
+        return "+233" + phone.substring(1);
+    }
+    if (phone.startsWith("+")) {
+        return phone;
+    }
+    return "+233" + phone;
+}
 }
