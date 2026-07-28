@@ -6,6 +6,9 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
+import org.springframework.util.LinkedMultiValueMap;
+import org.springframework.util.MultiValueMap;
+import org.springframework.web.reactive.function.BodyInserters;
 import org.springframework.web.reactive.function.client.WebClient;
 
 @Service
@@ -47,20 +50,20 @@ public class AfricasTalkingSmsService implements SmsService {
             throw new RuntimeException("SMS service is not configured: missing AT_API_KEY");
         }
 
-        StringBuilder form = new StringBuilder();
-        form.append("username=").append(username)
-            .append("&to=").append(toPhone)
-            .append("&message=").append(message);
+        MultiValueMap<String, String> form = new LinkedMultiValueMap<>();
+        form.add("username", username);
+        form.add("to", toPhone);
+        form.add("message", message);
 
         if (senderId != null && !senderId.isBlank()) {
-            form.append("&from=").append(senderId);
+            form.add("from", senderId);
         }
 
         try {
             String response = webClient.post()
                     .uri("/version1/messaging")
                     .contentType(MediaType.APPLICATION_FORM_URLENCODED)
-                    .bodyValue(form.toString())
+                    .body(BodyInserters.fromFormData(form))
                     .retrieve()
                     .bodyToMono(String.class)
                     .block();
