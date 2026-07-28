@@ -42,6 +42,11 @@ public class AfricasTalkingSmsService implements SmsService {
 
     @Override
     public void sendSms(String toPhone, String message) {
+        if (apiKey == null || apiKey.isBlank()) {
+            log.error("SMS not sent to {} — AT_API_KEY is not configured", toPhone);
+            throw new RuntimeException("SMS service is not configured: missing AT_API_KEY");
+        }
+
         StringBuilder form = new StringBuilder();
         form.append("username=").append(username)
             .append("&to=").append(toPhone)
@@ -51,14 +56,19 @@ public class AfricasTalkingSmsService implements SmsService {
             form.append("&from=").append(senderId);
         }
 
-        String response = webClient.post()
-                .uri("/version1/messaging")
-                .contentType(MediaType.APPLICATION_FORM_URLENCODED)
-                .bodyValue(form.toString())
-                .retrieve()
-                .bodyToMono(String.class)
-                .block();
+        try {
+            String response = webClient.post()
+                    .uri("/version1/messaging")
+                    .contentType(MediaType.APPLICATION_FORM_URLENCODED)
+                    .bodyValue(form.toString())
+                    .retrieve()
+                    .bodyToMono(String.class)
+                    .block();
 
-        log.info("SMS sent to {}, response: {}", toPhone, response);
+            log.info("SMS sent to {}, response: {}", toPhone, response);
+        } catch (Exception ex) {
+            log.error("Failed to send SMS to {}: {}", toPhone, ex.getMessage(), ex);
+            throw new RuntimeException("Failed to send SMS: " + ex.getMessage(), ex);
+        }
     }
 }
