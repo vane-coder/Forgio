@@ -83,12 +83,14 @@ public class NotificationService {
 
     private NotificationResponse toResponse(Notification n) {
         User s = n.getSentBy();
+        Department d = n.getTargetDept();
         return new NotificationResponse(
                 n.getNotifId(),
                 n.getMessage(),
                 n.getType(),
                 n.getTargetRole(),
-                n.getTargetDept() != null ? n.getTargetDept().getDeptId() : null,
+                d != null ? d.getDeptId() : null,
+                d != null ? d.getName()   : null,
                 s != null ? s.getUserId() : null,
                 s != null ? s.getName()   : null,
                 n.getSentAt());

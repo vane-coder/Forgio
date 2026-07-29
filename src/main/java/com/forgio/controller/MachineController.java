@@ -1,7 +1,9 @@
 package com.forgio.controller;
 
+import com.forgio.dto.request.CreateMachineRequest;
 import com.forgio.dto.response.MachineResponse;
 import com.forgio.service.MachineService;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -23,6 +25,12 @@ public class MachineController {
     @GetMapping
     public ResponseEntity<List<MachineResponse>> list() {
         return ResponseEntity.ok(machineService.listMachines());
+    }
+
+    @PostMapping
+    @PreAuthorize("hasRole('MANAGER')")
+    public ResponseEntity<MachineResponse> create(@Valid @RequestBody CreateMachineRequest req) {
+        return ResponseEntity.ok(machineService.createMachine(req));
     }
 
     @PatchMapping("/{id}/status")

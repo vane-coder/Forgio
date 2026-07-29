@@ -1,5 +1,6 @@
 package com.forgio.controller;
 
+import com.forgio.dto.request.CreateWorkerRequest;
 import com.forgio.dto.request.PermissionRequest;
 import com.forgio.dto.response.PermissionResponse;
 import com.forgio.service.PermissionService;
@@ -29,6 +30,12 @@ public class PermissionController {
     @PreAuthorize("hasRole('MANAGER')")
     public ResponseEntity<PermissionResponse> getForUser(@PathVariable UUID userId) {
         return ResponseEntity.ok(permissionService.getForUser(userId));
+    }
+
+    @PostMapping("/workers")
+    @PreAuthorize("hasRole('MANAGER')")
+    public ResponseEntity<PermissionResponse> createWorker(@Valid @RequestBody CreateWorkerRequest req) {
+        return ResponseEntity.ok(permissionService.createWorker(req));
     }
 
     @PostMapping("/assign")
