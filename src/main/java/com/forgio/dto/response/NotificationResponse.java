@@ -12,6 +12,7 @@ public record NotificationResponse(
         NotificationType type,
         UserRole targetRole,
         UUID targetDeptId,
+        String targetDeptName,
         UUID sentById,
         String sentByName,
         Instant sentAt

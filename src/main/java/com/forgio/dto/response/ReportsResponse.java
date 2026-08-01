@@ -1,13 +1,17 @@
 package com.forgio.dto.response;
 
-import lombok.AllArgsConstructor;
-import lombok.Data;
+import java.time.LocalDate;
 import java.util.UUID;
 
-@Data
-@AllArgsConstructor
-public class ReportsResponse {
-    private UUID id;
-    private String status;
-    private String message;
-}
+public record ReportsResponse(
+        UUID reportId,
+        String title,
+        String status,
+        LocalDate startDate,
+        LocalDate endDate,
+        int productionEntries,
+        String totalProduced,
+        int lowStockMaterials,
+        int machinesStopped,
+        String content
+) {}

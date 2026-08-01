@@ -9,5 +9,6 @@ import java.util.UUID;
 
 public interface DepartmentRepository extends JpaRepository<Department, UUID> {
     List<Department> findByFactory_FactoryId(UUID factoryId);
+    List<Department> findByFactory_FactoryIdOrderByCreatedAtAsc(UUID factoryId);
     Optional<Department> findByDeptIdAndFactory_FactoryId(UUID deptId, UUID factoryId);
 }

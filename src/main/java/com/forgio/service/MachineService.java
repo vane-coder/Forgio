@@ -13,6 +13,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+
 import java.util.List;
 import java.util.UUID;
 
@@ -23,8 +24,16 @@ public class MachineService {
     private final MachineRepository machineRepository;
     private final FactoryRepository factoryRepository;
 
+    @Transactional
+    public MachineResponse updateStatus(UUID machineId, MachineStatus status) {
+        UUID factoryId = TenantContext.getFactoryId();
+        Machine machine = machineRepository.findByMachineIdAndFactory_FactoryId(machineId, factoryId)
+                .orElseThrow(() -> new ResourceNotFoundException("Machine not found"));
+        machine.setStatus(status);
+        return toResponse(machineRepository.save(machine));
+    }
+
     /** Every query scoped to TenantContext.getFactoryId() — never client input. */
-    @Transactional(readOnly = true)
     public List<MachineResponse> listMachines() {
         UUID factoryId = TenantContext.getFactoryId();
         return machineRepository.findByFactory_FactoryId(factoryId).stream()

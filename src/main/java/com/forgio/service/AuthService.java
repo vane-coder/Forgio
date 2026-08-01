@@ -1,12 +1,13 @@
 package com.forgio.service;
 
-import com.forgio.dto.request.LoginRequest;
-import com.forgio.dto.request.RefreshTokenRequest;
-import com.forgio.dto.request.RegisterRequest;
+import com.forgio.dto.request.*;
 import com.forgio.dto.response.AuthResponse;
+import com.forgio.dto.response.LoginChallengeResponse;
+import com.forgio.dto.response.OtpSentResponse;
 import com.forgio.entity.Factory;
 import com.forgio.entity.RefreshToken;
 import com.forgio.entity.User;
+import com.forgio.enums.OtpPurpose;
 import com.forgio.enums.SubscriptionPlan;
 import com.forgio.enums.UserRole;
 import com.forgio.exception.BadRequestException;
@@ -34,17 +35,26 @@ public class AuthService {
     private final RefreshTokenRepository refreshTokenRepository;
     private final PasswordEncoder passwordEncoder;
     private final JwtTokenProvider tokenProvider;
+    private final OtpService otpService;
 
     @Value("${forgio.jwt.refresh-token-expiration}")
     private long refreshExpiration;
 
-    /**
-     * Registers a new factory and its first MANAGER together. This is the only
-     * way a brand-new tenant enters the system; all other users are created
-     * inside an existing factory by a manager.
-     */
+    // ── Registration (OTP) ──────────────────────────────────────
+
     @Transactional
-    public AuthResponse register(RegisterRequest req) {
+    public OtpSentResponse sendRegistrationCode(SendOtpRequest req) {
+        if (userRepository.existsByPhone(req.phone())) {
+            throw new BadRequestException("A user with this phone number already exists");
+        }
+        String verificationId = otpService.sendOtp(req.phone(), OtpPurpose.REGISTRATION);
+        return new OtpSentResponse("Verification code sent", verificationId);
+    }
+
+    @Transactional
+    public AuthResponse verifyAndRegister(VerifyRegistrationRequest req) {
+        otpService.verifyOtpByPhone(req.phone(), req.code(), OtpPurpose.REGISTRATION);
+
         if (userRepository.existsByPhone(req.phone())) {
             throw new BadRequestException("A user with this phone number already exists");
         }
@@ -69,8 +79,10 @@ public class AuthService {
         return issueTokens(manager);
     }
 
+    // ── Login (2FA) ─────────────────────────────────────────────
+
     @Transactional
-    public AuthResponse login(LoginRequest req) {
+    public LoginChallengeResponse login(LoginRequest req) {
         User user = userRepository.findByPhone(req.phone())
                 .orElseThrow(() -> new BadCredentialsException("Invalid credentials"));
 
@@ -81,14 +93,52 @@ public class AuthService {
             throw new BadCredentialsException("Invalid credentials");
         }
 
-        // Update FCM device token so push notifications reach the right device.
         if (req.fcmToken() != null && !req.fcmToken().isBlank()) {
             user.setFcmToken(req.fcmToken());
             userRepository.save(user);
         }
 
+        String verificationId = otpService.sendOtp(user.getPhone(), OtpPurpose.LOGIN);
+        return new LoginChallengeResponse(true, verificationId, "Verification code sent to your phone");
+    }
+
+    @Transactional
+    public AuthResponse verifyLogin(VerifyLoginRequest req) {
+        otpService.verifyOtp(req.verificationId(), req.code());
+
+        User user = userRepository.findByPhone(req.phone())
+                .orElseThrow(() -> new BadCredentialsException("Invalid credentials"));
+
+        if (!user.isActive()) {
+            throw new BadRequestException("This account has been deactivated");
+        }
+
         return issueTokens(user);
     }
+
+    // ── Password Reset ──────────────────────────────────────────
+
+    @Transactional
+    public OtpSentResponse sendPasswordResetCode(SendOtpRequest req) {
+        if (!userRepository.existsByPhone(req.phone())) {
+            return new OtpSentResponse("If an account exists, a verification code has been sent", null);
+        }
+        String verificationId = otpService.sendOtp(req.phone(), OtpPurpose.PASSWORD_RESET);
+        return new OtpSentResponse("If an account exists, a verification code has been sent", verificationId);
+    }
+
+    @Transactional
+    public void resetPassword(ResetPasswordRequest req) {
+        otpService.verifyOtpByPhone(req.phone(), req.code(), OtpPurpose.PASSWORD_RESET);
+
+        User user = userRepository.findByPhone(req.phone())
+                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
+
+        user.setPasswordHash(passwordEncoder.encode(req.newPassword()));
+        userRepository.save(user);
+    }
+
+    // ── Refresh Token (unchanged) ───────────────────────────────
 
     @Transactional
     public AuthResponse refresh(RefreshTokenRequest req) {
@@ -99,14 +149,14 @@ public class AuthService {
             throw new BadRequestException("Refresh token has expired, please log in again");
         }
 
-        // Rotate: revoke the old token and issue a fresh pair.
         stored.setRevoked(true);
         refreshTokenRepository.save(stored);
 
         return issueTokens(stored.getUser());
     }
 
-    // ── helpers ─────────────────────────────────────────────
+    // ── Helpers ─────────────────────────────────────────────────
+
     private AuthResponse issueTokens(User user) {
         String accessToken = tokenProvider.generateAccessToken(user);
         String refreshTokenStr = UUID.randomUUID() + "." + UUID.randomUUID();
