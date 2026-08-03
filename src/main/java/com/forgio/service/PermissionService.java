@@ -3,12 +3,14 @@ package com.forgio.service;
 import com.forgio.dto.request.CreateWorkerRequest;
 import com.forgio.dto.request.PermissionRequest;
 import com.forgio.dto.response.PermissionResponse;
+import com.forgio.entity.Department;
 import com.forgio.entity.Factory;
 import com.forgio.entity.Permission;
 import com.forgio.entity.User;
 import com.forgio.enums.UserRole;
 import com.forgio.exception.BadRequestException;
 import com.forgio.exception.ResourceNotFoundException;
+import com.forgio.repository.DepartmentRepository;
 import com.forgio.repository.FactoryRepository;
 import com.forgio.repository.PermissionRepository;
 import com.forgio.repository.UserRepository;
@@ -28,6 +30,7 @@ public class PermissionService {
     private final PermissionRepository permissionRepository;
     private final UserRepository userRepository;
     private final FactoryRepository factoryRepository;
+    private final DepartmentRepository departmentRepository;
     private final PasswordEncoder passwordEncoder;
 
     @Transactional(readOnly = true)
@@ -92,12 +95,21 @@ public class PermissionService {
             }
         }
 
+        // Optionally attach the worker to a department in this factory.
+        Department department = null;
+        if (req.departmentId() != null) {
+            department = departmentRepository
+                    .findByDeptIdAndFactory_FactoryId(req.departmentId(), factoryId)
+                    .orElseThrow(() -> new ResourceNotFoundException("Department not found in this factory"));
+        }
+
         User user = userRepository.save(User.builder()
                 .factory(factory)
                 .name(req.name())
                 .phone(req.phone())
                 .passwordHash(passwordEncoder.encode(req.password()))
                 .role(role)
+                .department(department)
                 .active(true)
                 .build());
 

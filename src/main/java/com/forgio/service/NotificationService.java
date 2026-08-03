@@ -6,6 +6,7 @@ import com.forgio.entity.Department;
 import com.forgio.entity.Factory;
 import com.forgio.entity.Notification;
 import com.forgio.entity.User;
+import com.forgio.enums.UserRole;
 import com.forgio.exception.ResourceNotFoundException;
 import com.forgio.repository.DepartmentRepository;
 import com.forgio.repository.FactoryRepository;
@@ -37,9 +38,22 @@ public class NotificationService {
     @Transactional(readOnly = true)
     public List<NotificationResponse> listNotifications() {
         UUID factoryId = TenantContext.getFactoryId();
-        return notificationRepository.findByFactory_FactoryIdOrderBySentAtDesc(factoryId).stream()
-                .map(this::toResponse)
-                .toList();
+
+        // Reload the caller so we know their role + department for targeting.
+        User me = userRepository.findById(currentUserId())
+                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
+
+        // Managers/dept-heads oversee everything; everyone else sees only
+        // broadcasts + notifications targeted at their role and/or department.
+        List<Notification> notifs;
+        if (me.getRole() == UserRole.MANAGER || me.getRole() == UserRole.SYSTEM_ADMIN) {
+            notifs = notificationRepository.findByFactory_FactoryIdOrderBySentAtDesc(factoryId);
+        } else {
+            UUID deptId = me.getDepartment() != null ? me.getDepartment().getDeptId() : null;
+            notifs = notificationRepository.findVisibleTo(factoryId, me.getRole(), deptId);
+        }
+
+        return notifs.stream().map(this::toResponse).toList();
     }
 
     @Transactional

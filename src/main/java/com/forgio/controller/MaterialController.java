@@ -1,5 +1,6 @@
 package com.forgio.controller;
 
+import com.forgio.dto.request.ConsumeMaterialRequest;
 import com.forgio.dto.request.MaterialRequest;
 import com.forgio.dto.response.MaterialResponse;
 import com.forgio.service.MaterialService;
@@ -36,5 +37,12 @@ public class MaterialController {
     public ResponseEntity<MaterialResponse> update(@PathVariable UUID id,
                                                    @Valid @RequestBody MaterialRequest req) {
         return ResponseEntity.ok(materialService.updateMaterial(id, req));
+    }
+
+    /** Any authenticated factory user (incl. WORKER) can record consumption. */
+    @PatchMapping("/{id}/consume")
+    public ResponseEntity<MaterialResponse> consume(@PathVariable UUID id,
+                                                    @Valid @RequestBody ConsumeMaterialRequest req) {
+        return ResponseEntity.ok(materialService.consume(id, req.quantity()));
     }
 }

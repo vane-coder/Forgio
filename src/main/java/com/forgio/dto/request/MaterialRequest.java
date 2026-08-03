@@ -5,11 +5,13 @@ import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.PositiveOrZero;
 
 import java.math.BigDecimal;
+import java.util.UUID;
 
 public record MaterialRequest(
         @NotBlank String name,
         @NotBlank String unit,
         @NotNull @PositiveOrZero BigDecimal quantityInStock,
         @NotNull @PositiveOrZero BigDecimal reorderLevel,
-        @NotNull @PositiveOrZero BigDecimal costPerUnit
+        @NotNull @PositiveOrZero BigDecimal costPerUnit,
+        UUID departmentId   // optional: null = factory-wide (shared) material
 ) {}

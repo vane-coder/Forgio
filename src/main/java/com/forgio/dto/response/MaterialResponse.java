@@ -10,5 +10,7 @@ public record MaterialResponse(
         BigDecimal quantityInStock,
         BigDecimal reorderLevel,
         BigDecimal costPerUnit,
-        boolean lowStock
+        boolean lowStock,
+        UUID departmentId,
+        String departmentName
 ) {}

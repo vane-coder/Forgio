@@ -55,10 +55,10 @@ public class ReportsService {
                         "COMPLETED",
                         report.getPeriodStart(),
                         report.getPeriodEnd(),
-                        0,
-                        null,
-                        0,
-                        0,
+                        report.getProductionEntries() != null ? report.getProductionEntries() : 0,
+                        report.getTotalProduced() != null ? report.getTotalProduced().toPlainString() : null,
+                        report.getLowStockMaterials() != null ? report.getLowStockMaterials() : 0,
+                        report.getMachinesStopped() != null ? report.getMachinesStopped() : 0,
                         report.getContent()
                 )).toList();
     }
@@ -109,6 +109,10 @@ public class ReportsService {
                 .periodEnd(request.endDate())
                 .generatedBy(creator)
                 .content(content)
+                .productionEntries(entries.size())
+                .totalProduced(totalProduced)
+                .lowStockMaterials(lowStock.size())
+                .machinesStopped(stopped)
                 .build();
 
         Report saved = reportsRepository.save(report);

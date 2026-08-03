@@ -38,4 +38,15 @@ public class ShipmentController {
                 com.forgio.enums.ShipmentStatus.valueOf(body.get("status"));
         return ResponseEntity.ok(shipmentService.updateStatus(id, status));
     }
+
+    /** Manager assigns (or reassigns) a driver to an existing shipment. */
+    @PatchMapping("/{id}/driver")
+    @PreAuthorize("hasRole('MANAGER')")
+    public ResponseEntity<ShipmentResponse> assignDriver(
+            @PathVariable java.util.UUID id,
+            @RequestBody java.util.Map<String, String> body) {
+        String raw = body.get("driverId");
+        java.util.UUID driverId = (raw == null || raw.isBlank()) ? null : java.util.UUID.fromString(raw);
+        return ResponseEntity.ok(shipmentService.assignDriver(id, driverId));
+    }
 }

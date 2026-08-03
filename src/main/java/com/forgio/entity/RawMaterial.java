@@ -23,6 +23,10 @@ public class RawMaterial {
     @JoinColumn(name = "factory_id", nullable = false)
     private Factory factory;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "department_id")
+    private Department department;
+
     @Column(nullable = false)
     private String name;
 

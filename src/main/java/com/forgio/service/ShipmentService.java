@@ -137,6 +137,32 @@ public class ShipmentService {
     }
 
 
+    /** Manager assigns or clears the driver on a shipment in their company. */
+    @Transactional
+    public ShipmentResponse assignDriver(UUID shipmentId, UUID driverId) {
+        UUID companyId = currentCompanyId();
+        Shipment shipment = shipmentRepository.findById(shipmentId)
+                .orElseThrow(() -> new ResourceNotFoundException("Shipment not found"));
+
+        // shipment must belong to the manager's company
+        if (shipment.getCompany() == null
+                || !shipment.getCompany().getCompanyId().equals(companyId)) {
+            throw new BadRequestException("Shipment does not belong to your company");
+        }
+
+        User driver = null;
+        if (driverId != null) {
+            driver = userRepository.findById(driverId)
+                    .orElseThrow(() -> new ResourceNotFoundException("Driver not found"));
+            if (driver.getRole() != UserRole.DRIVER) {
+                throw new BadRequestException("Assigned user is not a driver");
+            }
+        }
+
+        shipment.setDriver(driver);
+        return toResponse(shipmentRepository.save(shipment));
+    }
+
     private ShipmentResponse toResponse(Shipment s) {
         Branch fb = s.getFromBranch();
         Branch tb = s.getToBranch();
