@@ -6,23 +6,24 @@ import java.util.List;
 import java.util.UUID;
 
 public record ProductionResponse(
-        UUID entryId,
-        String productName,
-        BigDecimal quantityProduced,
-        String shift,
-        LocalDate entryDate,
-        boolean locked,
-        UUID workerId,
-        String workerName,
-        BigDecimal totalMaterialUsed,
-        BigDecimal totalWaste,
-        BigDecimal estimatedMaterialCost,
-        List<MaterialUsageResponse> materials
-) {
-    public record MaterialUsageResponse(
-            UUID materialId,
-            String materialName,
-            BigDecimal quantityUsed,
-            BigDecimal wasteAmount
-    ) {}
+                UUID entryId,
+                String productName,
+                BigDecimal quantityProduced,
+                String shift,
+                LocalDate entryDate,
+                boolean locked,
+                UUID workerId,
+                String workerName,
+                UUID departmentId,
+                String departmentName,
+                BigDecimal totalMaterialUsed,
+                BigDecimal totalWaste,
+                BigDecimal estimatedMaterialCost,
+                List<MaterialUsageResponse> materials) {
+        public record MaterialUsageResponse(
+                        UUID materialId,
+                        String materialName,
+                        BigDecimal quantityUsed,
+                        BigDecimal wasteAmount) {
+        }
 }

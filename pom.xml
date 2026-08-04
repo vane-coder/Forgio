@@ -79,7 +79,7 @@
             <version>9.2.0</version>
         </dependency>
 
-        <!-- HTTP Client (for Claude AI + OpenWeatherMap) -->
+        <!-- HTTP Client (for Claude AI + OpenWeatherMap + Africa's Talking) -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-webflux</artifactId>

@@ -3,6 +3,7 @@ package com.forgio.service;
 import com.forgio.dto.request.ProductionRequest;
 import com.forgio.dto.response.ProductionResponse;
 import com.forgio.entity.*;
+import com.forgio.enums.UserRole;
 import com.forgio.exception.BadRequestException;
 import com.forgio.exception.ResourceNotFoundException;
 import com.forgio.repository.*;
@@ -122,15 +123,29 @@ public class ProductionService {
                 entry.getEntryId(), entry.getProductName(), entry.getQuantityProduced(),
                 entry.getShift(), entry.getEntryDate(), entry.isLocked(),
                 worker.getUserId(), worker.getName(),
+                department != null ? department.getDeptId() : null,
+                department != null ? department.getName() : null,
                 totalUsed, totalWaste, totalCost, lines);
     }
 
+    /**
+     * Factory-wide production list. A MANAGER sees every department.
+     * A DEPT_HEAD only sees their own department's entries plus any
+     * factory-wide (unassigned) ones — never another department's.
+     */
     @Transactional(readOnly = true)
     public List<ProductionResponse> listFactoryProduction() {
         UUID factoryId = TenantContext.getFactoryId();
-        return productionRepository.findByFactory_FactoryId(factoryId).stream()
-                .map(this::toResponse)
-                .toList();
+        User me = (User) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+
+        List<ProductionEntry> entries;
+        if (me.getRole() == UserRole.DEPT_HEAD) {
+            UUID deptId = me.getDepartment() != null ? me.getDepartment().getDeptId() : null;
+            entries = productionRepository.findVisibleToDepartment(factoryId, deptId);
+        } else {
+            entries = productionRepository.findByFactory_FactoryId(factoryId);
+        }
+        return entries.stream().map(this::toResponse).toList();
     }
 
     @Transactional(readOnly = true)
@@ -165,10 +180,14 @@ public class ProductionService {
                 .map(WasteRecord::getWasteAmount)
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
 
+        Department dept = entry.getDepartment();
+
         return new ProductionResponse(
                 entry.getEntryId(), entry.getProductName(), entry.getQuantityProduced(),
                 entry.getShift(), entry.getEntryDate(), entry.isLocked(),
                 entry.getWorker().getUserId(), entry.getWorker().getName(),
+                dept != null ? dept.getDeptId() : null,
+                dept != null ? dept.getName() : null,
                 totalUsed, totalWaste, totalCost, lines);
     }
 }

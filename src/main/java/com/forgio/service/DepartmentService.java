@@ -16,6 +16,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.List;
 import java.util.UUID;
 
+
 @Service
 @RequiredArgsConstructor
 public class DepartmentService {
@@ -27,7 +28,7 @@ public class DepartmentService {
     @Transactional(readOnly = true)
     public List<DepartmentResponse> listDepartments() {
         UUID factoryId = TenantContext.getFactoryId();
-        return departmentRepository.findByFactory_FactoryIdOrderByCreatedAtAsc(factoryId).stream()
+        return departmentRepository.findByFactory_FactoryId(factoryId).stream()
                 .map(this::toResponse)
                 .toList();
     }

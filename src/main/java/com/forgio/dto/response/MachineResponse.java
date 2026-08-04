@@ -9,5 +9,7 @@ public record MachineResponse(
         UUID machineId,
         String name,
         MachineStatus status,
-        LocalDate lastServiceDate
+        LocalDate lastServiceDate,
+        UUID departmentId,
+        String departmentName
 ) {}

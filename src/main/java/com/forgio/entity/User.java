@@ -53,6 +53,9 @@ public class User implements UserDetails {
     @Column(name = "fcm_token")
     private String fcmToken;
 
+    @Column
+private String email;
+
     @CreationTimestamp
     @Column(name = "created_at", updatable = false)
     private Instant createdAt;

@@ -7,6 +7,8 @@ import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 
 import java.time.Instant;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.UUID;
 
 @Entity
@@ -41,6 +43,10 @@ public class Shipment {
     private ShipmentStatus status = ShipmentStatus.PENDING;
 
     private String notes;
+
+    @OneToMany(mappedBy = "shipment", cascade = CascadeType.ALL, orphanRemoval = true)
+    @Builder.Default
+    private List<ShipmentItem> items = new ArrayList<>();
 
     @Column(name = "departed_at")
     private Instant departedAt;
