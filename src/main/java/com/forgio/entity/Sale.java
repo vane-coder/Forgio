@@ -54,4 +54,8 @@ public class Sale {
     @CreationTimestamp
     @Column(name = "sold_at", updatable = false)
     private Instant soldAt;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+@JoinColumn(name = "department_id")
+private Department department;
 }

@@ -7,7 +7,8 @@ import java.util.UUID;
 public record CreateWorkerRequest(
         @NotBlank String name,
         @NotBlank String phone,
+        String email,          // optional: used to deliver OTP codes instead of SMS
         @NotBlank String password,
-        String role,          // optional: WORKER (default), DEPT_HEAD, or DRIVER
-        UUID departmentId     // optional: department this worker belongs to
+        String role,           // optional: DEPT_HEAD (default) or DRIVER
+        UUID departmentId      // optional: department this worker belongs to
 ) {}

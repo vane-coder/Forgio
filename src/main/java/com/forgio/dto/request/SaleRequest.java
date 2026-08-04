@@ -7,6 +7,7 @@ import java.util.UUID;
 
 public record SaleRequest(
         UUID materialId,                              // optional link to stocked material
+        UUID departmentId,                             // optional: which department this sale belongs to
         @NotBlank String itemName,
         @NotNull @Positive BigDecimal quantity,
         String unit,

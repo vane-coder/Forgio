@@ -47,8 +47,14 @@ public class AuthService {
         if (userRepository.existsByPhone(req.phone())) {
             throw new BadRequestException("A user with this phone number already exists");
         }
-        String verificationId = otpService.sendOtp(req.phone(), OtpPurpose.REGISTRATION);
-        return new OtpSentResponse("Verification code sent", verificationId);
+        // No User row exists yet at this point, so the email has to come straight
+        // from the registration form rather than being looked up.
+        String verificationId = otpService.sendOtp(req.phone(), req.email(), OtpPurpose.REGISTRATION);
+        return new OtpSentResponse(
+                req.email() != null && !req.email().isBlank()
+                        ? "Verification code sent to your email"
+                        : "Verification code sent to your phone",
+                verificationId);
     }
 
     @Transactional
@@ -71,6 +77,7 @@ public class AuthService {
                 .factory(factory)
                 .name(req.managerName())
                 .phone(req.phone())
+                .email(req.email())
                 .passwordHash(passwordEncoder.encode(req.password()))
                 .role(UserRole.MANAGER)
                 .active(true)
@@ -98,8 +105,11 @@ public class AuthService {
             userRepository.save(user);
         }
 
-        String verificationId = otpService.sendOtp(user.getPhone(), OtpPurpose.LOGIN);
-        return new LoginChallengeResponse(true, verificationId, "Verification code sent to your phone");
+        String verificationId = otpService.sendOtp(user.getPhone(), user.getEmail(), OtpPurpose.LOGIN);
+        String destination = (user.getEmail() != null && !user.getEmail().isBlank())
+                ? "Verification code sent to your email"
+                : "Verification code sent to your phone";
+        return new LoginChallengeResponse(true, verificationId, destination);
     }
 
     @Transactional
@@ -120,10 +130,11 @@ public class AuthService {
 
     @Transactional
     public OtpSentResponse sendPasswordResetCode(SendOtpRequest req) {
-        if (!userRepository.existsByPhone(req.phone())) {
+        User user = userRepository.findByPhone(req.phone()).orElse(null);
+        if (user == null) {
             return new OtpSentResponse("If an account exists, a verification code has been sent", null);
         }
-        String verificationId = otpService.sendOtp(req.phone(), OtpPurpose.PASSWORD_RESET);
+        String verificationId = otpService.sendOtp(user.getPhone(), user.getEmail(), OtpPurpose.PASSWORD_RESET);
         return new OtpSentResponse("If an account exists, a verification code has been sent", verificationId);
     }
 

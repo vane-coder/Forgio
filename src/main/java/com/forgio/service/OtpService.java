@@ -22,6 +22,7 @@ public class OtpService {
 
     private final OtpVerificationRepository otpRepo;
     private final SmsService smsService;
+    private final EmailService emailService;
     private static final SecureRandom RANDOM = new SecureRandom();
 
     @Value("${forgio.otp.length:6}")
@@ -39,8 +40,13 @@ public class OtpService {
     @Value("${forgio.otp.rate-limit-window-minutes:10}")
     private int rateLimitWindowMinutes;
 
+    /**
+     * Sends an OTP. Delivered by email when one is available (free); falls back
+     * to SMS (costs money per message via Africa's Talking) only when the user
+     * has no email on file, so nobody gets locked out of their account.
+     */
     @Transactional
-    public String sendOtp(String phone, OtpPurpose purpose) {
+    public String sendOtp(String phone, String email, OtpPurpose purpose) {
         Instant windowStart = Instant.now().minus(rateLimitWindowMinutes, ChronoUnit.MINUTES);
         long recentCount = otpRepo.countByPhoneAndPurposeAndCreatedAtAfter(phone, purpose, windowStart);
         if (recentCount >= rateLimitCount) {
@@ -60,9 +66,17 @@ public class OtpService {
                 .build();
         otpRepo.save(otp);
 
-        String message = String.format(
-                "Your Forgio verification code is: %s. It expires in %d minutes.", code, expiryMinutes);
-        smsService.sendSms(toInternational(phone), message);
+        if (email != null && !email.isBlank()) {
+            emailService.send(
+                    email,
+                    "Your Forgio verification code",
+                    String.format("Your Forgio verification code is: %s. It expires in %d minutes.",
+                            code, expiryMinutes));
+        } else {
+            String message = String.format(
+                    "Your Forgio verification code is: %s. It expires in %d minutes.", code, expiryMinutes);
+            smsService.sendSms(toInternational(phone), message);
+        }
 
         return verificationId;
     }
@@ -111,12 +125,12 @@ public class OtpService {
     }
 
     private String toInternational(String phone) {
-    if (phone.startsWith("0")) {
-        return "+233" + phone.substring(1);
+        if (phone.startsWith("0")) {
+            return "+233" + phone.substring(1);
+        }
+        if (phone.startsWith("+")) {
+            return phone;
+        }
+        return "+233" + phone;
     }
-    if (phone.startsWith("+")) {
-        return phone;
-    }
-    return "+233" + phone;
-}
 }

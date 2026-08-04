@@ -7,6 +7,8 @@ public record PermissionResponse(
         UUID userId,
         String userName,
         String role,
+        UUID departmentId,
+        String departmentName,
         boolean viewReports,
         boolean enterData,
         boolean admin

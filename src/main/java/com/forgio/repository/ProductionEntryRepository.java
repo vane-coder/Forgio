@@ -20,4 +20,9 @@ public interface ProductionEntryRepository extends JpaRepository<ProductionEntry
     // Find unlocked entries older than the cutoff so the scheduler can lock them.
     @Query("SELECT p FROM ProductionEntry p WHERE p.locked = false AND p.createdAt < :cutoff")
     List<ProductionEntry> findUnlockedBefore(@Param("cutoff") Instant cutoff);
+
+    @Query("SELECT p FROM ProductionEntry p WHERE p.factory.factoryId = :factoryId " +
+       "AND (p.department IS NULL OR p.department.deptId = :deptId)")
+List<ProductionEntry> findVisibleToDepartment(@Param("factoryId") UUID factoryId,
+                                               @Param("deptId") UUID deptId);
 }

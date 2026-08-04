@@ -45,9 +45,7 @@ public class PermissionService {
                 .orElse(null);
 
         if (perm == null) {
-            return new PermissionResponse(
-                    null, user.getUserId(), user.getName(), user.getRole().name(),
-                    false, false, false);
+            return emptyResponse(user);
         }
         return toResponse(perm, user);
     }
@@ -61,9 +59,7 @@ public class PermissionService {
                             .findByUser_UserIdAndFactory_FactoryId(user.getUserId(), factoryId)
                             .orElse(null);
                     if (perm == null) {
-                        return new PermissionResponse(
-                                null, user.getUserId(), user.getName(), user.getRole().name(),
-                                false, false, false);
+                        return emptyResponse(user);
                     }
                     return toResponse(perm, user);
                 })
@@ -80,12 +76,12 @@ public class PermissionService {
             throw new BadRequestException("A user with this phone number already exists");
         }
 
-        UserRole role = UserRole.WORKER;
+        // A manager only ever creates department heads or drivers — plain WORKER accounts are retired.
+        UserRole role = UserRole.DEPT_HEAD;
         if (req.role() != null && !req.role().isBlank()) {
             try {
                 UserRole requested = UserRole.valueOf(req.role().trim().toUpperCase());
-                // A manager may only create non-privileged staff roles.
-                if (requested == UserRole.WORKER || requested == UserRole.DEPT_HEAD || requested == UserRole.DRIVER) {
+                if (requested == UserRole.DEPT_HEAD || requested == UserRole.DRIVER) {
                     role = requested;
                 } else {
                     throw new BadRequestException("Cannot create a user with role " + requested);
@@ -95,7 +91,7 @@ public class PermissionService {
             }
         }
 
-        // Optionally attach the worker to a department in this factory.
+        // Optionally attach the worker to a department in this factory (drivers typically have none).
         Department department = null;
         if (req.departmentId() != null) {
             department = departmentRepository
@@ -107,15 +103,14 @@ public class PermissionService {
                 .factory(factory)
                 .name(req.name())
                 .phone(req.phone())
+                .email(req.email())   // optional — used to deliver OTP codes by email instead of SMS
                 .passwordHash(passwordEncoder.encode(req.password()))
                 .role(role)
                 .department(department)
                 .active(true)
                 .build());
 
-        return new PermissionResponse(
-                null, user.getUserId(), user.getName(), user.getRole().name(),
-                false, false, false);
+        return emptyResponse(user);
     }
 
     @Transactional
@@ -138,12 +133,28 @@ public class PermissionService {
         return toResponse(permissionRepository.save(perm), user);
     }
 
+    /** A user with no Permission row yet (e.g. right after creation) — all flags default false. */
+    private PermissionResponse emptyResponse(User user) {
+        Department dept = user.getDepartment();
+        return new PermissionResponse(
+                null,
+                user.getUserId(),
+                user.getName(),
+                user.getRole().name(),
+                dept != null ? dept.getDeptId() : null,
+                dept != null ? dept.getName() : null,
+                false, false, false);
+    }
+
     private PermissionResponse toResponse(Permission p, User user) {
+        Department dept = user.getDepartment();
         return new PermissionResponse(
                 p.getPermId(),
                 user.getUserId(),
                 user.getName(),
                 user.getRole().name(),
+                dept != null ? dept.getDeptId() : null,
+                dept != null ? dept.getName() : null,
                 p.isViewReports(),
                 p.isEnterData(),
                 p.isAdmin());

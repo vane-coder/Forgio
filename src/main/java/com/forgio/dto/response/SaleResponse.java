@@ -7,6 +7,8 @@ import java.util.UUID;
 public record SaleResponse(
         UUID saleId,
         UUID materialId,
+        UUID departmentId,
+        String departmentName,
         String itemName,
         BigDecimal quantity,
         String unit,
