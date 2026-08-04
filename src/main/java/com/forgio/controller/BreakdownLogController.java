@@ -25,7 +25,7 @@ public class BreakdownLogController {
     }
 
     @PostMapping
-    @PreAuthorize("hasAnyRole('MANAGER','DEPT_HEAD')")
+    @PreAuthorize("hasAnyRole('MANAGER','DEPT_HEAD','WORKER')")
     public ResponseEntity<BreakdownLogResponse> create(@Valid @RequestBody BreakdownLogRequest request) {
         return ResponseEntity.ok(breakdownLogService.createLog(request));
     }

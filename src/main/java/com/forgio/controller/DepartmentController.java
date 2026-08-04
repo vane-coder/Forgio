@@ -29,3 +29,4 @@ public class DepartmentController {
         return ResponseEntity.ok(departmentService.createDepartment(req));
     }
 }
+

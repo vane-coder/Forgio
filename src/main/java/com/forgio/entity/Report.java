@@ -2,6 +2,7 @@ package com.forgio.entity;
 
 import jakarta.persistence.*;
 import lombok.*;
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.UUID;
 
@@ -35,4 +36,16 @@ public class Report {
     private User generatedBy;
 
     private String content;
+
+    @Column(name = "production_entries")
+    private Integer productionEntries;
+
+    @Column(name = "total_produced", precision = 12, scale = 3)
+    private BigDecimal totalProduced;
+
+    @Column(name = "low_stock_materials")
+    private Integer lowStockMaterials;
+
+    @Column(name = "machines_stopped")
+    private Integer machinesStopped;
 }

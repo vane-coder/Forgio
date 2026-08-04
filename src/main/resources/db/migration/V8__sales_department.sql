@@ -1,0 +1,1 @@
+ALTER TABLE sales ADD COLUMN department_id UUID REFERENCES departments(dept_id);

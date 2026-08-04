@@ -9,3 +9,4 @@ public record DepartmentResponse(
         String headName,
         int workerCount
 ) {}
+

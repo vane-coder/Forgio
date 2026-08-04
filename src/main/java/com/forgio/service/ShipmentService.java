@@ -4,7 +4,9 @@ import com.forgio.dto.request.ShipmentRequest;
 import com.forgio.dto.response.ShipmentResponse;
 import com.forgio.entity.Branch;
 import com.forgio.entity.Factory;
+import com.forgio.entity.RawMaterial;
 import com.forgio.entity.Shipment;
+import com.forgio.entity.ShipmentItem;
 import com.forgio.entity.User;
 import com.forgio.enums.ShipmentStatus;
 import com.forgio.enums.UserRole;
@@ -12,6 +14,7 @@ import com.forgio.exception.BadRequestException;
 import com.forgio.exception.ResourceNotFoundException;
 import com.forgio.repository.BranchRepository;
 import com.forgio.repository.FactoryRepository;
+import com.forgio.repository.RawMaterialRepository;
 import com.forgio.repository.ShipmentRepository;
 import com.forgio.repository.UserRepository;
 import com.forgio.security.TenantContext;
@@ -36,6 +39,7 @@ public class ShipmentService {
     private final BranchRepository branchRepository;
     private final FactoryRepository factoryRepository;
     private final UserRepository userRepository;
+    private final RawMaterialRepository rawMaterialRepository;
 
     /** Resolve the current user's company id from their factory. */
     private UUID currentCompanyId() {
@@ -85,6 +89,24 @@ public class ShipmentService {
                 .notes(req.notes())
                 .build();
 
+        // cargo: each line picks a material from the current factory
+        if (req.items() != null) {
+            UUID factoryId = TenantContext.getFactoryId();
+            for (ShipmentRequest.CargoLine line : req.items()) {
+                RawMaterial material = rawMaterialRepository
+                        .findByMaterialIdAndFactory_FactoryId(line.materialId(), factoryId)
+                        .orElseThrow(() -> new ResourceNotFoundException("Material not found in this factory"));
+                ShipmentItem item = ShipmentItem.builder()
+                        .shipment(shipment)
+                        .material(material)
+                        .description(material.getName())
+                        .unit(material.getUnit())
+                        .quantity(line.quantity())
+                        .build();
+                shipment.getItems().add(item);
+            }
+        }
+
         return toResponse(shipmentRepository.save(shipment));
     }
    /** Driver advances their own shipment's status, forward-only. */
@@ -115,10 +137,43 @@ public class ShipmentService {
     }
 
 
+    /** Manager assigns or clears the driver on a shipment in their company. */
+    @Transactional
+    public ShipmentResponse assignDriver(UUID shipmentId, UUID driverId) {
+        UUID companyId = currentCompanyId();
+        Shipment shipment = shipmentRepository.findById(shipmentId)
+                .orElseThrow(() -> new ResourceNotFoundException("Shipment not found"));
+
+        // shipment must belong to the manager's company
+        if (shipment.getCompany() == null
+                || !shipment.getCompany().getCompanyId().equals(companyId)) {
+            throw new BadRequestException("Shipment does not belong to your company");
+        }
+
+        User driver = null;
+        if (driverId != null) {
+            driver = userRepository.findById(driverId)
+                    .orElseThrow(() -> new ResourceNotFoundException("Driver not found"));
+            if (driver.getRole() != UserRole.DRIVER) {
+                throw new BadRequestException("Assigned user is not a driver");
+            }
+        }
+
+        shipment.setDriver(driver);
+        return toResponse(shipmentRepository.save(shipment));
+    }
+
     private ShipmentResponse toResponse(Shipment s) {
         Branch fb = s.getFromBranch();
         Branch tb = s.getToBranch();
         User d = s.getDriver();
+        List<ShipmentResponse.CargoItem> items = s.getItems().stream()
+                .map(it -> new ShipmentResponse.CargoItem(
+                        it.getMaterial() != null ? it.getMaterial().getMaterialId() : null,
+                        it.getDescription(),
+                        it.getQuantity(),
+                        it.getUnit()))
+                .toList();
         return new ShipmentResponse(
                 s.getShipmentId(),
                 fb != null ? fb.getBranchId() : null,
@@ -129,6 +184,7 @@ public class ShipmentService {
                 d != null ? d.getName()   : null,
                 s.getStatus(),
                 s.getNotes(),
+                items,
                 s.getDepartedAt(),
                 s.getArrivedAt(),
                 s.getCreatedAt());

@@ -15,6 +15,7 @@ import java.util.UUID;
 public class Machine {
     @Id @GeneratedValue(strategy = GenerationType.UUID) @Column(name = "machine_id") private UUID machineId;
     @ManyToOne(fetch = FetchType.LAZY, optional = false) @JoinColumn(name = "factory_id") private Factory factory;
+    @ManyToOne(fetch = FetchType.LAZY) @JoinColumn(name = "department_id") private Department department;
     @Column(nullable = false) private String name;
     @Enumerated(EnumType.STRING) @Column(nullable = false) private MachineStatus status = MachineStatus.RUNNING;
     @Column(name = "last_service_date") private LocalDate lastServiceDate;
